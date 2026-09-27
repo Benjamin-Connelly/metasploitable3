@@ -122,9 +122,9 @@
       "http_port_min" : 9001,
       "http_port_max" : 9001,
       "boot_command": [
-        "<esc><wait>",
-        "<esc><wait>",
-        "<enter><wait>",
+        "<esc><wait5>",
+        "<esc><wait5>",
+        "<enter><wait5>",
         "/install/vmlinuz",
         " auto=true",
         " priority=critical",
@@ -133,7 +133,8 @@
         " -- ",
         "<enter>"
       ],
-      "boot_wait": "20s",
+      "boot_wait": "10s",
+      "boot_key_interval": "30ms",
       "communicator": "ssh",
       "accelerator": "kvm",
       "ssh_username": "vagrant",
@@ -141,6 +142,8 @@
       "ssh_timeout": "2h",
       "shutdown_command": "echo 'packer' | sudo -S shutdown -P now",
       "disk_size": 40000,
+      "format": "qcow2",
+      "output_directory": "{{template_dir}}/../builds/ubuntu_1404_qemu",
       "vm_name": "metasploitable3-ub1404",
       "qemuargs": [
         ["-m", "4096"],
@@ -151,8 +154,34 @@
   ],
   "provisioners": [
     {
+      "type": "file",
+      "source": "{{template_dir}}/../http/cinc_15.2.20-1_amd64.deb",
+      "destination": "/tmp/cinc.deb"
+    },
+    {
+      "type": "file",
+      "source": "{{template_dir}}/../http/docker-ce_18.06.1_trusty_amd64.deb",
+      "destination": "/tmp/docker-ce.deb"
+    },
+    {
+      "type": "shell",
+      "execute_command": "echo 'vagrant' | {{.Vars}} sudo -S -E bash '{{.Path}}'",
+      "inline": [
+        "set -e",
+        "export DEBIAN_FRONTEND=noninteractive",
+        "apt-get update",
+        "dpkg -i /tmp/cinc.deb",
+        "ln -s /opt/cinc /opt/chef",
+        "/opt/cinc/bin/cinc-solo --version",
+        "apt-get install -y iptables init-system-helpers libdevmapper1.02.1 libltdl7 libsystemd-journal0",
+        "dpkg -i /tmp/docker-ce.deb",
+        "docker --version"
+      ]
+    },
+    {
       "type": "chef-solo",
-      "version": "13.8.5",
+      "skip_install": true,
+      "execute_command": "{{if .Sudo}}sudo {{end}}/opt/cinc/bin/cinc-solo --chef-license accept --no-color -c {{.ConfigPath}} -j {{.JsonPath}}",
       "cookbook_paths": [
         "{{template_dir}}/../../chef/cookbooks"
       ],
@@ -179,13 +208,6 @@
         "metasploitable::flags",
         "metasploitable::ifnames"
       ]
-    }
-  ],
-  "post-processors": [
-    {
-      "type": "vagrant",
-      "keep_input_artifact": false,
-      "output": "{{template_dir}}/../builds/ubuntu_1404_{{.Provider}}_{{user `box_version`}}.box"
     }
   ],
   "variables": {

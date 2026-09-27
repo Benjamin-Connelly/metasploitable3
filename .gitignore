@@ -10,3 +10,7 @@ resources/windows_pre_downloads/
 *.DS_Store
 *.box
 *.iso
+
+# Provisioner packages the qemu builds upload into the Ubuntu guest. Fetch them by
+# hand (see the file provisioners in packer/templates/ubuntu_1404.json); never commit them.
+packer/http/*.deb

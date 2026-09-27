@@ -35,16 +35,17 @@ cookbook_file '/opt/docker/7_of_diamonds.zip' do
   mode '0700'
 end
 
-docker_image '7_of_diamonds' do
-    action :build_if_missing
-    source '/opt/docker/'
+# Built with the docker CLI rather than docker_image/docker_container: the
+# docker-api gem those resources use fails to parse the build stream from
+# docker 18.06 with current excon releases ("malformed header").
+execute 'build 7_of_diamonds image' do
+  command 'docker build -t 7_of_diamonds /opt/docker/'
+  not_if 'docker image inspect 7_of_diamonds >/dev/null 2>&1'
 end
 
-docker_container '7_of_diamonds' do
-    action :run_if_missing
-    restart_policy 'always'
-    tty true
-    open_stdin true
+execute 'run 7_of_diamonds container' do
+  command 'docker run -d -i -t --restart always --name 7_of_diamonds 7_of_diamonds'
+  not_if 'docker container inspect 7_of_diamonds >/dev/null 2>&1'
 end
 
 file '/opt/docker/7_of_diamonds.zip' do

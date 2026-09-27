@@ -138,6 +138,7 @@
       "shutdown_command": "shutdown /s /t 10 /f /d p:4:1 /c \"Packer Shutdown\"",
       "disk_size": 61440,
       "format": "qcow2",
+      "output_directory": "{{template_dir}}/../builds/windows_2008_r2_qemu",
       "vm_name": "metasploitable3-win2k8",
       "floppy_files": [
         "{{user `autounattend`}}",
@@ -157,7 +158,7 @@
         "{{user `resources_dir`}}/certs/microsoft_root_2011.cer",
         "{{user `resources_dir`}}/certs/thawte_primary_root.cer",
         "{{user `resources_dir`}}/certs/utn-userfirst.cer",
-        "./resources/drivers/virtio/*"
+        "{{user `resources_dir`}}/drivers/virtio/*"
       ],
       "qemuargs": [
         [
@@ -238,8 +239,8 @@
     {
       "type": "powershell",
       "scripts": [
-        "./scripts/configs/vagrant-ssh.ps1",
-        "./scripts/installs/chocolatey.ps1"
+        "{{user `scripts_dir`}}/configs/vagrant-ssh.ps1",
+        "{{user `scripts_dir`}}/installs/chocolatey.ps1"
       ],
       "pause_before": "60s"
     },
@@ -353,14 +354,6 @@
       "type": "file",
       "source": "{{user `scripts_dir`}}/installs/setup_linux_share.bat",
       "destination": "C:/startup/setup_linux_share.bat"
-    }
-  ],
-  "post-processors": [
-    {
-      "type": "vagrant",
-      "keep_input_artifact": false,
-      "output": "{{template_dir}}/../builds/windows_2008_r2_{{.Provider}}_{{user `box_version`}}.box",
-      "vagrantfile_template": "{{template_dir}}/vagrantfile-windows_2008_r2.template"
     }
   ],
   "variables": {
